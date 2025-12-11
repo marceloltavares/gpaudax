@@ -107,16 +107,16 @@ nav ul li a:hover {
 
 /* Specific Parallax Sections */
 .hero {
-    background-image: url('https://picsum.photos/id/42/1920/1080'); /* Office vibe */
+    background-image: url('../images/1.jpg'); /* Office vibe */
     height: 100vh;
 }
 
 .separator-1 {
-    background-image: url('https://picsum.photos/id/160/1920/800'); /* Phone/tech vibe */
+    background-image: url('../images/2.jpg'); /* Phone/tech vibe */
 }
 
 .separator-2 {
-    background-image: url('https://picsum.photos/id/48/1920/800'); /* Architecture */
+    background-image: url('../images/3.jpg'); /* Architecture */
 }
 
 .hero h1 {

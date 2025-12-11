@@ -4,19 +4,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('video-modal');
     const openBtn = document.getElementById('open-video-btn');
     const closeBtn = document.querySelector('.close-btn');
-    const iframe = document.getElementById('youtube-iframe');
+    // In the new HTML, the iframe does not have an ID 'youtube-iframe', so we select it by tag within the container
+    const iframe = document.querySelector('.video-container iframe');
 
-    // Use a placeholder video (Rick Roll is classic, but let's use something generic like a nature documentary or generic corporate promo)
-    // Using a generic landscape video ID from YouTube.
-    const videoId = 'dQw4w9WgXcQ'; // Replace with actual company video later. (Yes, it's Never Gonna Give You Up - standard placeholder :D)
-    // Actually, let's use a safer generic corporate background video if possible, but for "placeholder" Rick Roll is a known variable.
-    // Let's swap to a generic "Nature" one to be safer for "Institutional".
-    // ID: lx7G7r08xV0 (Nature video)
-    const videoUrl = 'https://www.youtube.com/embed/lx7G7r08xV0?autoplay=1';
+    // The video URL is now hardcoded in the HTML as:
+    // src="https://www.youtube.com/embed/ux0_AzgfBXs?si=oH_5QVh9emByLT3i"
+
+    // When the modal is closed, we want to stop the video.
+    // The standard way is to clear the src.
+    // When opened, we restore the src.
+
+    // We capture the initial src from the HTML so we know what to restore it to.
+    const originalSrc = iframe.getAttribute('src');
+
+    // If the original src doesn't have autoplay, we might want to add it so it plays when the modal opens.
+    // However, the user provided a specific URL with 'si' params. Let's just append autoplay=1 if it's not there.
+    let playSrc = originalSrc;
+    if (playSrc.indexOf('?') === -1) {
+        playSrc += '?autoplay=1';
+    } else {
+        playSrc += '&autoplay=1';
+    }
+
+    // Initially clear the src so it doesn't play in the background on load (if autoplay was set)
+    // or just to be safe. But the user put it in the HTML, so it loads on page load.
+    // To prevent it from playing (if it had autoplay) or consuming resources, we can clear it on load and set it only on click.
+    iframe.src = "";
 
     openBtn.addEventListener('click', function() {
         modal.style.display = 'block';
-        iframe.src = videoUrl; // Start video
+        iframe.src = playSrc; // Start video with autoplay
     });
 
     closeBtn.addEventListener('click', function() {
@@ -32,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Parallax smoothness fallback (optional, CSS usually handles it well)
     // Smooth scrolling for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
