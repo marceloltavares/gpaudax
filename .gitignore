@@ -1,0 +1,18 @@
+# Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build / publish
+[Dd]ebug/
+[Rr]elease/
+publish/
+*.pubxml.user
+
+# Pacotes
+packages/
+node_modules/
