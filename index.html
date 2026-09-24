@@ -272,9 +272,52 @@ footer p{margin:0}
 @keyframes waPulse{0%{transform:scale(1); opacity:.55}80%,100%{transform:scale(1.7); opacity:0}}
 .scroll-cue{bottom:140px!important}
 @media (prefers-reduced-motion:reduce){.wa-float{animation:none; opacity:1; transform:none}.wa-btn::before{animation:none; opacity:0}}
+
+/* MODAL: aviso de mudança de marca (GP AUDAX -> GP TRIX) */
+.rb{position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:24px; padding-top:calc(24px + env(safe-area-inset-top,0px)); padding-bottom:calc(24px + env(safe-area-inset-bottom,0px)); background:rgba(2,8,18,.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); opacity:0; visibility:hidden; transition:opacity .35s, visibility .35s}
+.rb.open{opacity:1; visibility:visible}
+.rb-box{position:relative; width:100%; max-width:30rem; max-height:100%; overflow:auto; background:linear-gradient(160deg,var(--bg2) 0%,var(--hero) 100%); border:1px solid var(--border); border-radius:16px; padding:40px 32px 32px; box-shadow:0 30px 80px rgba(0,0,0,.55); transform:translateY(16px) scale(.98); transition:transform .45s cubic-bezier(.16,1,.3,1); text-align:center}
+.rb.open .rb-box{transform:none}
+.rb-close{position:absolute; top:12px; right:12px; width:40px; height:40px; border:0; border-radius:8px; background:transparent; color:var(--muted); font-size:1.5rem; line-height:1; cursor:pointer; transition:background .2s,color .2s}
+.rb-close:hover{background:var(--nav); color:var(--fg)}
+.rb-close:focus-visible,.rb .btn:focus-visible{outline:2px solid var(--bright); outline-offset:3px}
+.rb-tag{display:inline-block; margin:0 0 20px; padding:6px 12px; border-radius:999px; background:var(--chip); border:1px solid var(--border); color:var(--bright); font-size:.6875rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase}
+.rb-logos{display:flex; align-items:center; justify-content:center; gap:16px; margin:0 0 24px}
+.rb-old{color:var(--muted2); font-size:1.125rem; font-weight:500; letter-spacing:.08em; text-decoration:line-through; text-decoration-color:rgba(163,179,202,.5)}
+.rb-arrow{color:var(--bright); font-size:1.25rem}
+.rb-logos img{height:26px; width:auto; display:block}
+.rb h2{margin:0 0 12px; font-size:clamp(1.375rem,4vw,1.75rem); font-weight:300; line-height:1.25; letter-spacing:-.01em; color:var(--fg)}
+.rb h2 strong{font-weight:500; color:var(--bright)}
+.rb p{margin:0 0 8px; color:var(--muted); font-size:.9375rem; font-weight:300; line-height:1.6}
+.rb-url{display:inline-block; margin:8px 0 28px; color:var(--fg); font-weight:500; font-size:1.0625rem; text-decoration:none; border-bottom:1px solid var(--bright)}
+.rb-actions{display:flex; flex-direction:column; gap:10px; font-weight:700}
+.rb-actions .btn{justify-content:center}
+.rb-link{background:none; border:0; color:var(--muted); font:inherit; font-size:.8125rem; font-weight:400; cursor:pointer; padding:8px; text-decoration:underline; text-underline-offset:3px}
+.rb-link:hover{color:var(--fg)}
+@media (prefers-reduced-motion:reduce){.rb,.rb-box{transition:none}}
 </style>
 </head>
 <body>
+
+<div class="rb" id="rebrand" role="dialog" aria-modal="true" aria-labelledby="rbTitle" aria-describedby="rbDesc" hidden data-lenis-prevent>
+  <div class="rb-box">
+    <button class="rb-close" type="button" id="rbClose" aria-label="Fechar aviso">&times;</button>
+    <span class="rb-tag">Nova marca</span>
+    <div class="rb-logos" aria-hidden="true">
+      <span class="rb-old">GP AUDAX</span><span class="rb-arrow">&rarr;</span><img id="rbLogo" alt="">
+    </div>
+    <h2 id="rbTitle">A GP AUDAX agora é <strong>GP TRIX</strong></h2>
+    <div id="rbDesc">
+      <p>Mesma empresa, mesmo time e o mesmo atendimento. Mudamos o nome para ficar ainda mais <strong style="color:var(--fg);font-weight:500">simples pra você!</strong></p>
+      <p>Nosso novo endereço é:</p>
+    </div>
+    <a class="rb-url" href="https://www.gptrix.com.br/">www.gptrix.com.br</a>
+    <div class="rb-actions">
+      <a class="btn btn-primary" id="rbGo" href="https://www.gptrix.com.br/">Continuar no novo site</a>
+      <button class="rb-link" type="button" id="rbStay">Fechar</button>
+    </div>
+  </div>
+</div>
 <a class="wa-float" href="https://wa.me/5535997003987?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20GP%20TRIX%20e%20gostaria%20de%20saber%20mais%20sobre%20antecipa%C3%A7%C3%A3o%20de%20receb%C3%ADveis." target="_blank" rel="noopener noreferrer" aria-label="Conversar com a GP TRIX no WhatsApp">
   <span class="wa-btn"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.5-4.3A8.5 8.5 0 1 1 20.5 11.6z"/><path d="M9 8.6c.2-.4.5-.5.8-.5h.5c.2 0 .4.1.5.4l.7 1.6c.1.2 0 .5-.1.6l-.5.6c.6 1.2 1.5 2.1 2.7 2.7l.6-.5c.2-.2.4-.2.6-.1l1.6.7c.3.1.4.3.4.5v.5c0 .3-.1.6-.5.8-.6.3-1.4.4-2.3.1a8 8 0 0 1-4.9-4.9c-.3-.9-.2-1.7.1-2.3z" fill="currentColor" stroke="none"/></svg></span>
   <span class="wa-label">Fale no WhatsApp</span>
@@ -466,6 +509,7 @@ footer p{margin:0}
   var lenis=null;
   if(window.Lenis){
     lenis=new Lenis({duration:1.25, easing:function(t){return Math.min(1,1.001-Math.pow(2,-10*t));}, smoothWheel:true, wheelMultiplier:.9, touchMultiplier:1.4});
+    window.__lenis=lenis;
     lenis.on('scroll',ScrollTrigger.update);
     gsap.ticker.add(function(t){lenis.raf(t*1000);});
     gsap.ticker.lagSmoothing(0);
@@ -568,6 +612,65 @@ footer p{margin:0}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FinancialService","name":"GP TRIX","description":"Soluções financeiras para produtores rurais, microempreendedores e pequenas e médias empresas: crédito empresarial, capital de giro, reestruturação de fluxo de caixa, antecipação e compra de recebíveis.","parentOrganization":{"@type":"Organization","name":"Grupo GrandPneus"},"telephone":"+55 35 99700-3987","audience":[{"@type":"BusinessAudience","audienceType":"Produtores rurais"},{"@type":"BusinessAudience","audienceType":"Microempreendedores individuais (MEI)"},{"@type":"BusinessAudience","audienceType":"Pequenas e médias empresas"}],"hasOfferCatalog":{"@type":"OfferCatalog","name":"Soluções financeiras","itemListElement":[{"@type":"Offer","itemOffered":{"@type":"Service","name":"Análise de crédito","description":"Crédito empresarial e capital de giro adequados à realidade financeira da empresa."}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Reestruturação de fluxo financeiro","description":"Reorganização do fluxo de caixa e dos compromissos financeiros."}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Compra de recebíveis","description":"Antecipação de recebíveis de vendas a prazo para gerar capital de giro."}}]}}
+</script>
+<script>
+/* Aviso de mudança de marca: aparece quando o visitante chega por gpaudax.com.br
+   (acesso direto pelo domínio antigo OU vindo do redirecionamento com ?de=gpaudax) */
+(function(){
+  var NEW_URL='https://www.gptrix.com.br';
+  var host=location.hostname.toLowerCase();
+  var params=new URLSearchParams(location.search);
+  var onOldHost=/(^|\.)gpaudax\.com\.br$/.test(host);
+  var fromOld=params.get('de')==='gpaudax' || /gpaudax\.com\.br/i.test(document.referrer||'');
+  if(!onOldHost && !fromOld) return;
+
+  var m=document.getElementById('rebrand'), box=m.querySelector('.rb-box');
+  var go=document.getElementById('rbGo'), stay=document.getElementById('rbStay'), x=document.getElementById('rbClose');
+  var navImg=document.querySelector('.nav-logo img');
+  if(navImg) document.getElementById('rbLogo').src=navImg.src;
+
+  var target=NEW_URL+location.pathname+location.hash;
+  if(onOldHost){
+    /* ainda no domínio antigo: botão leva ao novo site mantendo a página atual */
+    go.href=target;
+  }else{
+    /* já está no gptrix: botão só fecha e limpa o ?de= da URL */
+    go.textContent='Entendi, continuar';
+    go.addEventListener('click',function(e){e.preventDefault(); close();});
+    params.delete('de');
+    var q=params.toString();
+    try{history.replaceState(null,'',location.pathname+(q?'?'+q:'')+location.hash);}catch(e){}
+  }
+
+  var last=null;
+  function lock(on){
+    document.documentElement.style.overflow=on?'hidden':'';
+    var l=window.__lenis; if(l){ on?l.stop():l.start(); }
+  }
+  function open(){
+    last=document.activeElement;
+    m.hidden=false; lock(true);
+    requestAnimationFrame(function(){ m.classList.add('open'); go.focus({preventScroll:true}); });
+  }
+  function close(){
+    m.classList.remove('open'); lock(false);
+    setTimeout(function(){ m.hidden=true; if(last&&last.focus) last.focus({preventScroll:true}); },350);
+  }
+  x.addEventListener('click',close);
+  stay.addEventListener('click',close);
+  m.addEventListener('click',function(e){ if(e.target===m) close(); });
+  document.addEventListener('keydown',function(e){
+    if(m.hidden) return;
+    if(e.key==='Escape'){ close(); return; }
+    if(e.key==='Tab'){
+      var f=box.querySelectorAll('a[href],button'); var a=f[0], z=f[f.length-1];
+      if(e.shiftKey && document.activeElement===a){ e.preventDefault(); z.focus(); }
+      else if(!e.shiftKey && document.activeElement===z){ e.preventDefault(); a.focus(); }
+    }
+  });
+  if(document.readyState==='complete') setTimeout(open,600);
+  else window.addEventListener('load',function(){ setTimeout(open,600); });
+})();
 </script>
 </body>
 </html>
