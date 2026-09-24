@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catálogo de peças — Passeio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --grafite:#22303A; --aco:#E6E9EC; --papel:#F7F8F9; --sinal:#F2B705; --tinta:#13191E; --cinza:#5E6D79;
+  --linha:#D3D8DD; --fundo:var(--papel); --painel:#FFFFFF; --texto:var(--tinta); --suave:var(--cinza);
+  --sel:#FFF4CC;
+  --sans:"Barlow","Segoe UI",Arial,sans-serif; --cond:"Barlow Condensed","Arial Narrow","Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --fundo:#161E24; --painel:#1D2830; --texto:#E6E9EC; --suave:#98A6B1; --linha:#2F3D47; --sel:#3A3316;}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font:15px/1.45 var(--sans);color:var(--texto);background:var(--fundo);display:flex;flex-direction:column}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--sinal);outline-offset:2px}
+
+header{background:var(--grafite);color:#fff;padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+header h1{font:600 22px/1 var(--cond);margin:0;letter-spacing:.3px;white-space:nowrap}
+header .base{font-size:13px;color:#B9C4CC;white-space:nowrap}
+.filtros{display:flex;flex-wrap:wrap;gap:8px;flex:1;justify-content:flex-end}
+.filtros input,.filtros select{background:#2E3F4B;border:1px solid #3F5260;border-radius:4px;padding:7px 10px;color:#fff;min-width:0}
+.filtros input::placeholder{color:#9FB0BC}
+#busca{flex:1 1 260px;max-width:380px}
+#modelo{flex:0 1 170px}
+#montadora{flex:0 1 190px}
+.btn{background:transparent;border:1px solid #4D6272;color:#fff;border-radius:4px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--sinal)}
+
+main{flex:1;display:grid;grid-template-columns:300px minmax(320px,1fr) minmax(360px,1.1fr);min-height:0}
+section{min-height:0;overflow:auto;border-right:1px solid var(--linha)}
+
+/* Árvore */
+#arvore{background:var(--painel);padding:8px 0}
+.no{display:flex;align-items:center;gap:6px;width:100%;text-align:left;background:none;border:0;padding:5px 12px;cursor:pointer;border-left:3px solid transparent}
+.no:hover{background:var(--aco)}
+@media (prefers-color-scheme:dark){.no:hover{background:#26343E}}
+.no.ativo{border-left-color:var(--sinal);background:var(--sel)}
+.no .seta{width:14px;flex:none;color:var(--suave);font-size:11px;transition:transform .15s}
+.no.aberto .seta{transform:rotate(90deg)}
+.no .nome{flex:1;min-width:0}
+.no .qtd{font:600 13px var(--cond);color:var(--suave);min-width:28px;text-align:right}
+.no.vazio{opacity:.45}
+.n1>.no .nome{font-weight:600}
+.n2>.no{padding-left:26px}
+.n3>.no{padding-left:48px;font-size:14px}
+.filhos{display:none}
+.aberto+.filhos{display:block}
+.sep{height:1px;background:var(--linha);margin:8px 12px}
+
+/* Lista */
+#lista{padding:0}
+.topo-lista{position:sticky;top:0;background:var(--fundo);padding:10px 16px;border-bottom:1px solid var(--linha);font-size:14px;color:var(--suave);z-index:1}
+.topo-lista strong{color:var(--texto)}
+.item{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;padding:10px 16px;border-bottom:1px solid var(--linha);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left}
+.item:hover{background:var(--aco)}
+@media (prefers-color-scheme:dark){.item:hover{background:#22303A}}
+.item.ativo{background:var(--sel)}
+.item .cod{font:600 19px/1.2 var(--cond);grid-row:span 2;min-width:92px}
+.item .desc{font-weight:500}
+.item .pos{font-size:13px;color:var(--suave)}
+.mais{display:block;margin:14px auto;background:var(--grafite);color:#fff;border:0;border-radius:4px;padding:8px 18px;cursor:pointer}
+.vazio-msg{padding:32px 20px;color:var(--suave);max-width:46ch}
+
+/* Detalhe */
+#detalhe{background:var(--painel);border-right:0;padding:20px 24px 40px}
+.etiqueta{display:inline-flex;align-items:center;background:var(--sinal);color:var(--tinta);padding:4px 16px 4px 12px;font:700 40px/1 var(--cond);letter-spacing:.5px;
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%)}
+.etiqueta::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--painel);margin-right:12px}
+#detalhe h2{font:600 22px/1.2 var(--cond);margin:14px 0 2px}
+.meta{color:var(--suave);font-size:14px;margin:0 0 14px}
+.fotos{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 18px}
+.fotos img{max-width:100%;max-height:220px;background:#fff;border:1px solid var(--linha);border-radius:4px;padding:6px}
+.sem-foto{font-size:13px;color:var(--suave);border:1px dashed var(--linha);padding:10px 14px;border-radius:4px}
+.caminhos{margin:0 0 18px;padding:0;list-style:none}
+.caminhos li{font-size:14px;padding:3px 0}
+.caminhos a{color:inherit;text-decoration:underline;text-decoration-color:var(--sinal);text-underline-offset:3px;cursor:pointer}
+h3{font:600 17px var(--cond);margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--sinal);display:inline-block}
+.tabela{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{text-align:left;font-weight:600;color:var(--suave);padding:6px 8px;border-bottom:1px solid var(--linha);white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid var(--linha);vertical-align:top}
+.refs{display:flex;flex-wrap:wrap;gap:6px}
+.ref{border:1px solid var(--linha);border-radius:3px;padding:3px 8px;font-size:13px}
+.ref b{font-weight:600}
+.obs{background:var(--sel);padding:10px 12px;border-radius:4px;font-size:14px}
+
+/* Abertura */
+#abertura{position:fixed;inset:0;background:var(--grafite);color:#fff;display:flex;align-items:center;justify-content:center;z-index:10;padding:24px}
+#abertura .caixa{max-width:480px}
+#abertura h2{font:700 44px/1 var(--cond);margin:0 0 14px}
+#abertura p{color:#C5CFD6;margin:0 0 20px}
+#abertura label{display:inline-block;background:var(--sinal);color:var(--tinta);font-weight:600;padding:10px 20px;border-radius:4px;cursor:pointer}
+#abertura input{position:absolute;left:-9999px}
+#abertura .solta{margin-top:18px;border:2px dashed #4D6272;border-radius:6px;padding:18px;text-align:center;color:#9FB0BC}
+#abertura.arrastando .solta{border-color:var(--sinal);color:#fff}
+#abertura .erro{color:#FFB4A8;margin-top:12px}
+
+@media (max-width:1100px){main{grid-template-columns:260px 1fr}#detalhe{grid-column:1/-1;border-top:1px solid var(--linha)}}
+@media (max-width:700px){main{display:block;overflow:auto}section{border-right:0;overflow:visible}#arvore{max-height:40vh;overflow:auto}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="abertura">
+  <div class="caixa">
+    <h2>Catálogo de peças</h2>
+    <p>Abra o arquivo <b>catalogo_sistema.db</b> para carregar os produtos e a árvore de classificação.</p>
+    <label for="arquivo">Abrir banco de dados</label>
+    <input type="file" id="arquivo" accept=".db,.sqlite">
+    <div class="solta">ou arraste o arquivo .db para cá</div>
+    <div class="erro" id="erro-abertura"></div>
+  </div>
+</div>
+
+<header>
+  <h1>Catálogo de peças</h1>
+  <span class="base" id="base"></span>
+  <div class="filtros">
+    <input id="busca" type="search" placeholder="Código, referência ou texto" aria-label="Buscar">
+    <select id="montadora" aria-label="Montadora"><option value="">Todas as montadoras</option></select>
+    <input id="modelo" type="search" placeholder="Modelo do veículo" aria-label="Modelo">
+    <button class="btn" id="limpar">Limpar filtros</button>
+    <button class="btn" id="cfg-fotos" title="Pasta onde estão as fotos dos produtos">Pasta das fotos</button>
+  </div>
+</header>
+
+<main>
+  <section id="arvore" aria-label="Árvore de sistemas"></section>
+  <section id="lista" aria-label="Produtos"></section>
+  <section id="detalhe" aria-label="Detalhe do produto"><p class="vazio-msg">Escolha um produto na lista para ver aplicações, referências cruzadas e fotos.</p></section>
+</main>
+
+<script src="lib/sql-wasm.js"></script>
+<script src="lib/sql-wasm-bin.js"></script>
+<script src="lib/catalogo_db.js" onerror="void 0"></script>
+<script>
+"use strict";
+let db = null;
+let arvore = [], porId = new Map(), filhosDe = new Map();
+const estado = { no: null, busca: "", montadora: "", modelo: "", limite: 100, produto: null };
+let pastaFotos = "FotoProd/";
+try { pastaFotos = localStorage.getItem("pastaFotos") || pastaFotos; } catch (e) {}
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pesq = s => String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+const semAcento = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+
+function q(sql, params = []) {
+  const st = db.prepare(sql); st.bind(params);
+  const out = []; while (st.step()) out.push(st.getAsObject()); st.free(); return out;
+}
+
+/* ---------- Abertura do banco ---------- */
+async function iniciarSql() {
+  const bin = Uint8Array.from(atob(window.SQL_WASM_B64), c => c.charCodeAt(0));
+  return initSqlJs({ wasmBinary: bin });
+}
+const sqlPronto = iniciarSql();
+
+async function abrirBytes(buf) {
+  try {
+    const SQL = await sqlPronto;
+    db = new SQL.Database(new Uint8Array(buf));
+    q("SELECT 1 FROM arvore LIMIT 1");
+    $("#abertura").remove();
+    montar();
+  } catch (e) {
+    db = null;
+    $("#erro-abertura").textContent = "Este arquivo não é o banco do catálogo (esperado: catalogo_sistema.db).";
+  }
+}
+$("#arquivo").addEventListener("change", e => { const f = e.target.files[0]; if (f) f.arrayBuffer().then(abrirBytes); });
+const ab = $("#abertura");
+ab.addEventListener("dragover", e => { e.preventDefault(); ab.classList.add("arrastando"); });
+ab.addEventListener("dragleave", () => ab.classList.remove("arrastando"));
+ab.addEventListener("drop", e => { e.preventDefault(); ab.classList.remove("arrastando"); const f = e.dataTransfer.files[0]; if (f) f.arrayBuffer().then(abrirBytes); });
+// abre automaticamente: 1) banco embutido em lib/catalogo_db.js  2) catalogo_sistema.db via http
+if (window.CATALOGO_DB_B64) {
+  ab.querySelector("p").textContent = "Carregando o catálogo…";
+  ab.querySelectorAll("label, .solta").forEach(el => el.hidden = true);
+  setTimeout(() => {
+    const bin = Uint8Array.from(atob(window.CATALOGO_DB_B64), c => c.charCodeAt(0));
+    window.CATALOGO_DB_B64 = null;
+    abrirBytes(bin.buffer);
+  }, 0);
+} else if (location.protocol.startsWith("http")) {
+  fetch("catalogo_sistema.db").then(r => r.ok ? r.arrayBuffer() : null).then(b => b && abrirBytes(b)).catch(() => {});
+}
+
+/* ---------- Montagem ---------- */
+function montar() {
+  const o = Object.fromEntries(q("SELECT chave, valor FROM origem").map(r => [r.chave, r.valor]));
+  $("#base").textContent = `Base Cofap v${o.versao} de ${o.data_emissao.split("-").reverse().join("/")}`;
+  for (const r of q("SELECT DISTINCT f.id, f.nome FROM fabricante f JOIN aplicacao a ON a.montadora_id = f.id ORDER BY f.nome"))
+    $("#montadora").insertAdjacentHTML("beforeend", `<option value="${r.id}">${esc(r.nome)}</option>`);
+  arvore = q("SELECT id, pai_id, nivel, nome, caminho FROM arvore ORDER BY ordem");
+  for (const n of arvore) { porId.set(n.id, n); if (!filhosDe.has(n.pai_id)) filhosDe.set(n.pai_id, []); filhosDe.get(n.pai_id).push(n); }
+  desenharArvore();
+  atualizar();
+}
+
+function folhas(id) {
+  if (id === "sem") return [];
+  const f = filhosDe.get(id); if (!f) return [id];
+  return f.flatMap(c => folhas(c.id));
+}
+
+/* ---------- Filtros → SQL ---------- */
+function clausulaFiltros() {
+  const w = [], p = [];
+  if (estado.busca) {
+    const cod = pesq(estado.busca);
+    const palavras = semAcento(estado.busca).split(/\s+/).filter(Boolean);
+    const partes = [];
+    if (cod.length >= 2) {
+      partes.push("p.codigo_pesq LIKE ?", "p.id IN (SELECT produto_id FROM referencia_cruzada WHERE codigo_pesq LIKE ?)");
+      p.push(cod + "%", cod + "%");
+    }
+    if (palavras.length) { partes.push("(" + palavras.map(() => "p.texto_busca LIKE ?").join(" AND ") + ")"); p.push(...palavras.map(x => "%" + x + "%")); }
+    if (partes.length) w.push("(" + partes.join(" OR ") + ")");
+  }
+  if (estado.montadora || estado.modelo) {
+    const s = []; 
+    if (estado.montadora) { s.push("a.montadora_id = ?"); p.push(+estado.montadora); }
+    if (estado.modelo) { s.push("a.modelo LIKE ?"); p.push("%" + estado.modelo + "%"); }
+    w.push(`p.id IN (SELECT pa.produto_id FROM produto_aplicacao pa JOIN aplicacao a ON a.id = pa.aplicacao_id WHERE ${s.join(" AND ")})`);
+  }
+  return { w, p };
+}
+
+function atualizar() {
+  estado.limite = 100;
+  contarArvore();
+  desenharLista();
+}
+
+/* ---------- Árvore ---------- */
+function desenharArvore() {
+  const html = [];
+  const rec = (pai) => {
+    for (const n of filhosDe.get(pai) || []) {
+      const temFilhos = filhosDe.has(n.id);
+      html.push(`<div class="n${n.nivel}"><button class="no" data-id="${n.id}" aria-expanded="false"><span class="seta">${temFilhos ? "▶" : ""}</span><span class="nome">${esc(n.nome)}</span><span class="qtd" data-q="${n.id}"></span></button>`);
+      if (temFilhos) { html.push('<div class="filhos">'); rec(n.id); html.push("</div>"); }
+      html.push("</div>");
+    }
+  };
+  html.push(`<div class="n1"><button class="no" data-id="todos"><span class="seta"></span><span class="nome">Todos os produtos</span><span class="qtd" data-q="todos"></span></button></div>`);
+  rec(null);
+  html.push(`<div class="sep"></div><div class="n1"><button class="no" data-id="sem"><span class="seta"></span><span class="nome">Sem classificação</span><span class="qtd" data-q="sem"></span></button></div>`);
+  $("#arvore").innerHTML = html.join("");
+  $("#arvore").addEventListener("click", e => {
+    const b = e.target.closest(".no"); if (!b) return;
+    const id = b.dataset.id;
+    const temFilhos = b.nextElementSibling && b.nextElementSibling.classList.contains("filhos");
+    if (temFilhos) { b.classList.toggle("aberto"); b.setAttribute("aria-expanded", b.classList.contains("aberto")); }
+    selecionarNo(id === "todos" ? null : id === "sem" ? "sem" : +id);
+  });
+}
+
+function selecionarNo(id, abrir) {
+  estado.no = id;
+  document.querySelectorAll(".no.ativo").forEach(x => x.classList.remove("ativo"));
+  const b = document.querySelector(`.no[data-id="${id ?? "todos"}"]`);
+  if (b) {
+    b.classList.add("ativo");
+    if (abrir) { let el = b.parentElement; while (el && el.id !== "arvore") { if (el.classList.contains("filhos")) el.previousElementSibling.classList.add("aberto"); el = el.parentElement; } b.scrollIntoView({ block: "nearest" }); }
+  }
+  estado.limite = 100; desenharLista();
+}
+
+function contarArvore() {
+  const { w, p } = clausulaFiltros();
+  const where = w.length ? "WHERE " + w.join(" AND ") : "";
+  const pares = q(`SELECT pa.arvore_id AS a, pa.produto_id AS p FROM produto_arvore pa JOIN produto p ON p.id = pa.produto_id ${where}`, p);
+  const conj = new Map();
+  const add = (id, pid) => { if (!conj.has(id)) conj.set(id, new Set()); conj.get(id).add(pid); };
+  for (const { a, p: pid } of pares) { let n = porId.get(a); while (n) { add(n.id, pid); n = porId.get(n.pai_id); } }
+  document.querySelectorAll("[data-q]").forEach(el => {
+    const k = el.dataset.q; let v;
+    if (k === "todos") v = q(`SELECT COUNT(*) c FROM produto p ${where}`, p)[0].c;
+    else if (k === "sem") v = q(`SELECT COUNT(*) c FROM produto p ${where ? where + " AND" : "WHERE"} p.id NOT IN (SELECT produto_id FROM produto_arvore)`, p)[0].c;
+    else v = conj.get(+k)?.size || 0;
+    el.textContent = v || "";
+    el.closest(".no").classList.toggle("vazio", !v);
+  });
+}
+
+/* ---------- Lista ---------- */
+function desenharLista() {
+  const { w, p } = clausulaFiltros();
+  if (estado.no === "sem") w.push("p.id NOT IN (SELECT produto_id FROM produto_arvore)");
+  else if (estado.no != null) { const f = folhas(estado.no); w.push(`p.id IN (SELECT produto_id FROM produto_arvore WHERE arvore_id IN (${f.join(",")}))`); }
+  const where = w.length ? "WHERE " + w.join(" AND ") : "";
+  const total = q(`SELECT COUNT(*) c FROM produto p ${where}`, p)[0].c;
+  const rows = q(`SELECT p.id, p.codigo, p.descricao, p.posicao, p.linha FROM produto p ${where} ORDER BY p.descricao, p.codigo LIMIT ${estado.limite}`, p);
+  const titulo = estado.no === "sem" ? "Sem classificação" : estado.no ? porId.get(estado.no).caminho : "Todos os produtos";
+  let html = `<div class="topo-lista"><strong>${total.toLocaleString("pt-BR")}</strong> produto${total === 1 ? "" : "s"} em ${esc(titulo)}</div>`;
+  if (!rows.length) html += `<p class="vazio-msg">Nenhum produto com esses filtros. Tente outro modelo, outra montadora ou limpe a busca.</p>`;
+  for (const r of rows)
+    html += `<button class="item${r.id === estado.produto ? " ativo" : ""}" data-id="${r.id}"><span class="cod">${esc(r.codigo)}</span><span class="desc">${esc(r.descricao)}${r.linha ? " " + esc(r.linha) : ""}</span><span class="pos">${esc(r.posicao || "")}</span></button>`;
+  if (total > rows.length) html += `<button class="mais" id="mais">Mostrar mais ${Math.min(100, total - rows.length)}</button>`;
+  $("#lista").innerHTML = html;
+  $("#mais")?.addEventListener("click", () => { estado.limite += 100; const y = $("#lista").scrollTop; desenharLista(); $("#lista").scrollTop = y; });
+}
+$("#lista").addEventListener("click", e => { const b = e.target.closest(".item"); if (!b) return; mostrarProduto(+b.dataset.id); document.querySelectorAll(".item.ativo").forEach(x => x.classList.remove("ativo")); b.classList.add("ativo"); });
+
+/* ---------- Detalhe ---------- */
+function mostrarProduto(id) {
+  estado.produto = id;
+  const p = q("SELECT * FROM produto WHERE id = ?", [id])[0];
+  const cam = q("SELECT a.id, a.caminho FROM produto_arvore pa JOIN arvore a ON a.id = pa.arvore_id WHERE pa.produto_id = ?", [id]);
+  const apl = q(`SELECT f.nome montadora, a.modelo, a.complemento, a.anos, a.complemento3, a.complemento4 FROM produto_aplicacao pa
+                 JOIN aplicacao a ON a.id = pa.aplicacao_id LEFT JOIN fabricante f ON f.id = a.montadora_id
+                 WHERE pa.produto_id = ? ORDER BY f.nome, a.modelo, a.anos`, [id]);
+  const refs = q(`SELECT f.nome marca, r.codigo FROM referencia_cruzada r LEFT JOIN fabricante f ON f.id = r.marca_id
+                  WHERE r.produto_id = ? ORDER BY f.nome, r.codigo`, [id]);
+  const fotos = [p.foto, p.foto2, p.foto3].filter(Boolean);
+  let h = `<div class="etiqueta">${esc(p.codigo)}</div>
+    <h2>${esc(p.descricao)}${p.linha ? " " + esc(p.linha) : ""}</h2>
+    <p class="meta">${esc(p.posicao || "Posição não informada")} · Grupo Cofap: ${esc(p.grupo_cofap || "—")}${p.unidade ? " · Unidade: " + esc(p.unidade) : ""}</p>
+    <div class="fotos">${fotos.map(f => `<img src="${esc(pastaFotos + f)}" alt="Foto ${esc(p.codigo)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'sem-foto',textContent:'Foto ${esc(f)} não encontrada em ${esc(pastaFotos)}'}))">`).join("") || '<span class="sem-foto">Produto sem foto cadastrada</span>'}</div>
+    <h3>Na árvore</h3>
+    <ul class="caminhos">${cam.length ? cam.map(c => `<li><a data-no="${c.id}">${esc(c.caminho)}</a></li>`).join("") : "<li>Sem classificação na árvore Passeio</li>"}</ul>`;
+  if (p.observacao) h += `<h3>Observação</h3><div class="obs">${esc(p.observacao)}</div>`;
+  h += `<h3>Aplicações (${apl.length})</h3>`;
+  h += apl.length ? `<div class="tabela"><table><thead><tr><th>Montadora</th><th>Modelo</th><th>Complemento</th><th>Anos</th></tr></thead><tbody>${apl.map(a => `<tr><td>${esc(a.montadora)}</td><td>${esc(a.modelo)}</td><td>${esc([a.complemento, a.complemento3, a.complemento4].filter(Boolean).join(" · "))}</td><td>${esc(a.anos)}</td></tr>`).join("")}</tbody></table></div>` : "<p>Sem aplicações cadastradas.</p>";
+  h += `<h3>Referências cruzadas (${refs.length})</h3>`;
+  h += refs.length ? `<div class="refs">${refs.map(r => `<span class="ref"><b>${esc(r.marca)}</b> ${esc(r.codigo)}</span>`).join("")}</div>` : "<p>Sem referências cruzadas.</p>";
+  $("#detalhe").innerHTML = h;
+  $("#detalhe").scrollTop = 0;
+}
+$("#detalhe").addEventListener("click", e => { const a = e.target.closest("[data-no]"); if (a) selecionarNo(+a.dataset.no, true); });
+
+/* ---------- Eventos de filtro ---------- */
+let t;
+const aoDigitar = (campo) => e => { clearTimeout(t); t = setTimeout(() => { estado[campo] = e.target.value.trim(); atualizar(); }, 250); };
+$("#busca").addEventListener("input", aoDigitar("busca"));
+$("#modelo").addEventListener("input", aoDigitar("modelo"));
+$("#montadora").addEventListener("change", e => { estado.montadora = e.target.value; atualizar(); });
+$("#limpar").addEventListener("click", () => {
+  $("#busca").value = $("#modelo").value = $("#montadora").value = "";
+  Object.assign(estado, { busca: "", modelo: "", montadora: "" });
+  atualizar();
+});
+$("#cfg-fotos").addEventListener("click", () => {
+  const v = prompt("Pasta das fotos (relativa a este arquivo ou caminho completo, ex.: file:///C:/ProgramData/CatalogoProdutosCofap/FotoProd/)", pastaFotos);
+  if (v == null) return;
+  pastaFotos = v.endsWith("/") ? v : v + "/";
+  try { localStorage.setItem("pastaFotos", pastaFotos); } catch (e) {}
+  if (estado.produto) mostrarProduto(estado.produto);
+});
+</script>
+</body>
+</html>
