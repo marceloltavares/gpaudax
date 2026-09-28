@@ -3,8 +3,8 @@
 ## Como usar
 1. Copie a pasta `C:\ProgramData\CatalogoProdutosCofap\FotoProd` para dentro desta pasta (ao lado do `index.html`) para as fotos aparecerem.
    Outra opção é apontar o botão **Pasta das fotos** para o caminho original, ex.: `file:///C:/ProgramData/CatalogoProdutosCofap/FotoProd/`.
-2. Dê duplo clique no `index.html` (Chrome ou Edge). O catálogo abre sozinho, porque o banco vai embutido em `lib/catalogo_db.js`.
-   Se esse arquivo for removido, a página pede para abrir o `catalogo_sistema.db` manualmente.
+2. Abra o `index.html` no Chrome ou Edge e clique em **Abrir banco de dados**, escolhendo `catalogo_sistema.db`.
+   Se a pasta estiver servida por HTTP (ex.: `python -m http.server`), o banco abre sozinho.
 3. Navegue pela árvore, filtre por montadora/modelo e busque por código Cofap, código de concorrente (Nakata, Monroe, KYB...) ou texto.
 
 Funciona offline. A única dependência externa é a fonte Barlow (Google Fonts), com fallback automático.
@@ -14,7 +14,6 @@ Funciona offline. A única dependência externa é a fonte Barlow (Google Fonts)
 |---|---|
 | `catalogo_sistema.db` | Banco SQLite com produtos, árvore, aplicações, referências e classificação |
 | `index.html` + `lib/` | Interface (sql.js embutido, lê o banco direto no navegador) |
-| `lib/catalogo_db.js` | Cópia do banco embutida para abertura automática (gerada pelo `gerar_banco.py`) |
 | `scripts/gerar_banco.py` | Recria o banco a partir de um novo `CatalogoExpresso.c01` e do `Passeio.xlsx` |
 | `scripts/exportar_csv.py` | Exporta as tabelas em CSV |
 | `csv_access/` | CSVs prontos para importar no Access |
@@ -30,8 +29,6 @@ Funciona offline. A única dependência externa é a fonte Barlow (Google Fonts)
 
 Para ajustar a classificação, edite a lista `REGRAS` em `gerar_banco.py` e rode:
 `python scripts/gerar_banco.py CatalogoExpresso.c01 Passeio.xlsx catalogo_sistema.db`
-Isso recria o banco **e** o `lib/catalogo_db.js`. Se editar o `.db` por outra ferramenta (DBeaver, Access via ODBC),
-rode `python scripts/embutir_banco.py catalogo_sistema.db lib/catalogo_db.js` para a página ver a mudança.
 
 ## Usar no Access
 - **Importar:** Dados Externos > Novo Arquivo de Texto > escolha cada CSV de `csv_access` (delimitado por `;`, primeira linha com nomes, codificação UTF-8). Depois crie as relações pelos campos `*_id`.

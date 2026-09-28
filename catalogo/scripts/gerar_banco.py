@@ -3,8 +3,6 @@ Gera o banco catalogo_sistema.db a partir de:
   - CatalogoExpresso.c01  (base cifrada do Catálogo Cofap)
   - Passeio.xlsx          (árvore Sistema > Grupo > Subgrupo)
 
-Também gera lib/catalogo_db.js (banco embutido que o index.html abre sozinho).
-
 Uso:
   python gerar_banco.py CatalogoExpresso.c01 Passeio.xlsx catalogo_sistema.db
 
@@ -267,14 +265,6 @@ def main(c01, xlsx, saida):
     print(f"Produtos: {total} | classificados: {total - sem} | sem classificação: {sem}")
     db.execute("VACUUM")
     db.close()
-
-    # banco embutido para o index.html abrir sozinho
-    js = os.path.join(os.path.dirname(os.path.abspath(saida)), "lib", "catalogo_db.js")
-    os.makedirs(os.path.dirname(js), exist_ok=True)
-    import base64
-    with open(js, "w", encoding="ascii") as f:
-        f.write('window.CATALOGO_DB_B64="' + base64.b64encode(open(saida, "rb").read()).decode() + '";')
-    print(f"Banco embutido em {js}")
 
 
 if __name__ == "__main__":
