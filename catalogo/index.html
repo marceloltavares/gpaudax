@@ -27,9 +27,9 @@ header .base{font-size:13px;color:#B9C4CC;white-space:nowrap}
 .filtros{display:flex;flex-wrap:wrap;gap:8px;flex:1;justify-content:flex-end}
 .filtros input,.filtros select{background:#2E3F4B;border:1px solid #3F5260;border-radius:4px;padding:7px 10px;color:#fff;min-width:0}
 .filtros input::placeholder{color:#9FB0BC}
-#busca{flex:1 1 260px;max-width:380px}
-#modelo{flex:0 1 170px}
-#montadora{flex:0 1 190px}
+#busca{flex:1 1 200px;max-width:380px}
+#modelo{flex:0 1 150px}
+#montadora{flex:0 1 170px}
 .btn{background:transparent;border:1px solid #4D6272;color:#fff;border-radius:4px;padding:7px 12px;cursor:pointer}
 .btn:hover{border-color:var(--sinal)}
 
@@ -113,7 +113,45 @@ td{padding:6px 8px;border-bottom:1px solid var(--linha);vertical-align:top}
 #abertura.arrastando .solta{border-color:var(--sinal);color:#fff}
 #abertura .erro{color:#FFB4A8;margin-top:12px}
 
+/* Informativos */
+#btn-inf[aria-pressed="true"]{background:var(--sinal);border-color:var(--sinal);color:var(--tinta)}
+body.modo-inf main{display:none}
+body.modo-inf .filtros{display:none}
+#informativos{display:none;flex:1;min-height:0;grid-template-columns:minmax(320px,440px) 1fr}
+body.modo-inf #informativos{display:grid}
+#inf-lista{background:var(--painel)}
+.inf-filtros{position:sticky;top:0;z-index:1;background:var(--painel);padding:10px 12px;border-bottom:1px solid var(--linha);display:flex;flex-wrap:wrap;gap:6px}
+.inf-filtros input,.inf-filtros select{background:var(--fundo);border:1px solid var(--linha);border-radius:4px;padding:6px 8px;min-width:0}
+#inf-busca{flex:1 1 100%}
+.inf-filtros select{flex:1 1 30%}
+.inf-total{padding:8px 12px;font-size:14px;color:var(--suave);border-bottom:1px solid var(--linha)}
+.inf-total strong{color:var(--texto)}
+.inf{display:grid;grid-template-columns:56px 1fr;gap:2px 12px;align-items:start;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--linha);padding:10px 12px;cursor:pointer}
+.inf:hover{background:var(--aco)}
+@media (prefers-color-scheme:dark){.inf:hover{background:#26343E}}
+.inf.ativo{background:var(--sel)}
+.inf img{grid-row:span 3;width:56px;height:78px;object-fit:cover;object-position:top;background:#fff;border:1px solid var(--linha);border-radius:3px}
+.inf .num{font:600 15px/1.2 var(--cond)}
+.inf .num span{font:400 13px var(--sans);color:var(--suave);margin-left:6px}
+.inf .tit{font-weight:500}
+.inf .cods{font-size:13px;color:var(--suave)}
+#inf-ver{background:var(--fundo);padding:20px 24px 40px;border-right:0}
+#inf-ver .folha{display:block;max-width:680px;width:100%;height:auto;background:#fff;border:1px solid var(--linha);border-radius:4px;margin-top:14px}
+.prods{display:flex;flex-wrap:wrap;gap:6px}
+.prods button{border:1px solid var(--linha);background:var(--painel);border-radius:4px;padding:6px 10px;cursor:pointer;text-align:left}
+.prods button:hover{border-color:var(--sinal)}
+.prods b{font:600 16px var(--cond);margin-right:6px}
+.prods small{color:var(--suave)}
+.inf-rel{display:flex;flex-wrap:wrap;gap:10px}
+.inf-rel a{display:flex;gap:10px;align-items:center;border:1px solid var(--linha);border-radius:4px;padding:6px 10px 6px 6px;color:inherit;text-decoration:none;cursor:pointer;max-width:320px}
+.inf-rel a:hover{border-color:var(--sinal)}
+.inf-rel img{width:44px;height:61px;object-fit:cover;object-position:top;background:#fff;border-radius:2px}
+.inf-rel b{font:600 15px var(--cond);display:block}
+.inf-rel span{font-size:13px}
+.link-img{font-size:14px;color:inherit;text-decoration:underline;text-decoration-color:var(--sinal);text-underline-offset:3px}
+
 @media (max-width:1100px){main{grid-template-columns:260px 1fr}#detalhe{grid-column:1/-1;border-top:1px solid var(--linha)}}
+@media (max-width:900px){body.modo-inf #informativos{display:block;overflow:auto}#informativos section{overflow:visible;border-right:0}}
 @media (max-width:700px){main{display:block;overflow:auto}section{border-right:0;overflow:visible}#arvore{max-height:40vh;overflow:auto}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -134,6 +172,7 @@ td{padding:6px 8px;border-bottom:1px solid var(--linha);vertical-align:top}
 <header>
   <h1>Catálogo de peças</h1>
   <span class="base" id="base"></span>
+  <button class="btn" id="btn-inf" aria-pressed="false" hidden>Informativos</button>
   <div class="filtros">
     <input id="busca" type="search" placeholder="Código, referência ou texto" aria-label="Buscar">
     <select id="montadora" aria-label="Montadora"><option value="">Todas as montadoras</option></select>
@@ -149,9 +188,22 @@ td{padding:6px 8px;border-bottom:1px solid var(--linha);vertical-align:top}
   <section id="detalhe" aria-label="Detalhe do produto"><p class="vazio-msg">Escolha um produto na lista para ver aplicações, referências cruzadas e fotos.</p></section>
 </main>
 
+<div id="informativos">
+  <section id="inf-lista" aria-label="Informativos técnicos">
+    <div class="inf-filtros">
+      <input id="inf-busca" type="search" placeholder="Título, número, código ou veículo" aria-label="Buscar informativo">
+      <select id="inf-cat" aria-label="Categoria"><option value="">Todas as categorias</option></select>
+      <select id="inf-ano" aria-label="Ano"><option value="">Todos os anos</option></select>
+      <select id="inf-mes" aria-label="Mês"><option value="">Todos os meses</option></select>
+    </div>
+    <div id="inf-itens"></div>
+  </section>
+  <section id="inf-ver" aria-label="Informativo"><p class="vazio-msg">Escolha um informativo na lista.</p></section>
+</div>
+
 <script src="lib/sql-wasm.js"></script>
 <script src="lib/sql-wasm-bin.js"></script>
-<script src="lib/catalogo_db.js?v=20260928" onerror="void 0"></script>
+<script src="lib/catalogo_db.js?v=20260928b" onerror="void 0"></script>
 <script>
 "use strict";
 let db = null;
@@ -229,6 +281,7 @@ function montar() {
   $("#linhas").innerHTML = linhas.map(l => `<button class="aba" data-linha="${l.id}" aria-pressed="${l.id === estado.linha}">${esc(l.nome)} <small data-ql="${l.id}"></small></button>`).join("");
   $("#linhas").addEventListener("click", e => { const b = e.target.closest(".aba"); if (b) trocarLinha(+b.dataset.linha); });
   trocarLinha(estado.linha);
+  montarInformativos();
 }
 
 function trocarLinha(id, noInicial) {
@@ -420,6 +473,12 @@ function mostrarProduto(id) {
     <h3>Na árvore</h3>
     <ul class="caminhos">${cam.length ? cam.map(c => `<li><span class="lin">${esc(c.linha)}</span><a data-no="${c.id}" data-lin="${c.lid}">${esc(c.caminho)}</a></li>`).join("") : "<li>Sem classificação nas árvores</li>"}</ul>`;
   if (p.observacao) h += `<h3>Observação</h3><div class="obs">${esc(p.observacao)}</div>`;
+  if (temInf) {
+    const infs = q(`SELECT i.id, i.numero, i.data, i.titulo, i.imagem FROM informativo_produto x JOIN informativo i ON i.id = x.informativo_id
+                    WHERE x.produto_id = ? ORDER BY i.data DESC, i.ordem DESC`, [id]);
+    if (infs.length) h += `<h3>Informativos técnicos (${infs.length})</h3><div class="inf-rel">${infs.map(i =>
+      `<a data-inf="${i.id}" href="#">${miniatura(i, 44)}<span><b>${esc(i.numero)} · ${dataCurta(i.data)}</b>${esc(i.titulo)}</span></a>`).join("")}</div>`;
+  }
   h += `<h3>Aplicações (${apl.length})</h3>`;
   h += apl.length ? `<div class="tabela"><table><thead><tr><th>Linha</th><th>Montadora</th><th>Modelo</th><th>Complemento</th><th>Anos</th></tr></thead><tbody>${apl.map(a => `<tr><td>${esc(a.linha)}</td><td>${esc(a.montadora)}</td><td>${esc(a.modelo)}</td><td>${esc([a.complemento, a.complemento3, a.complemento4].filter(Boolean).join(" · "))}</td><td>${esc(a.anos)}</td></tr>`).join("")}</tbody></table></div>` : "<p>Sem aplicações cadastradas.</p>";
   h += `<h3>Referências cruzadas (${refs.length})</h3>`;
@@ -429,6 +488,7 @@ function mostrarProduto(id) {
   document.querySelectorAll("#detalhe img[data-foto]").forEach(carregarFoto);
 }
 $("#detalhe").addEventListener("click", e => {
+  const inf = e.target.closest("[data-inf]"); if (inf) { e.preventDefault(); modoInformativos(true, +inf.dataset.inf); return; }
   const a = e.target.closest("[data-no]"); if (!a) return;
   const lin = +a.dataset.lin;
   if (lin !== estado.linha) trocarLinha(lin, +a.dataset.no); else selecionarNo(+a.dataset.no, true);
@@ -452,6 +512,113 @@ $("#cfg-fotos").addEventListener("click", () => {
   try { localStorage.setItem("pastaFotos", pastaFotos); } catch (e) {}
   if (estado.produto) mostrarProduto(estado.produto);
 });
+
+/* ---------- Informativos técnicos ---------- */
+let temInf = false;
+const infEstado = { busca: "", cat: "", ano: "", mes: "", sel: null };
+const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const dataCurta = d => d ? `${MESES[+d.slice(5, 7) - 1]}/${d.slice(0, 4)}` : "";
+const dataLonga = d => d ? d.split("-").reverse().join("/") : "";
+// miniatura em Informativos/mini/; se não existir, usa a imagem inteira
+function miniatura(i, w) {
+  if (!i.imagem) return "";
+  const mini = i.imagem.replace(/^Informativos\/(\d+)\.\w+$/, "Informativos/mini/$1.jpg");
+  return `<img loading="lazy" alt="" width="${w}" src="${esc(mini)}" onerror="this.onerror=null;this.src='${esc(i.imagem)}'">`;
+}
+
+function montarInformativos() {
+  try { temInf = q("SELECT COUNT(*) c FROM informativo")[0].c > 0; } catch (e) { temInf = false; }
+  if (!temInf) return;
+  $("#btn-inf").hidden = false;
+  $("#inf-cat").innerHTML += q("SELECT categoria, COUNT(*) n FROM informativo GROUP BY categoria ORDER BY categoria")
+    .map(r => `<option value="${esc(r.categoria)}">${esc(r.categoria)} (${r.n})</option>`).join("");
+  $("#inf-ano").innerHTML += q("SELECT DISTINCT substr(data, 1, 4) a FROM informativo WHERE data <> '' ORDER BY a DESC")
+    .map(r => `<option>${r.a}</option>`).join("");
+  $("#inf-mes").innerHTML += MESES.map((m, i) => `<option value="${String(i + 1).padStart(2, "0")}">${m}</option>`).join("");
+}
+
+function modoInformativos(ligar, id) {
+  document.body.classList.toggle("modo-inf", ligar);
+  $("#btn-inf").setAttribute("aria-pressed", ligar);
+  $("#btn-inf").textContent = ligar ? "Voltar ao catálogo" : "Informativos";
+  if (!ligar) return;
+  if (id) {  // vindo do produto: limpa filtros para o informativo aparecer na lista
+    Object.assign(infEstado, { busca: "", cat: "", ano: "", mes: "" });
+    ["#inf-busca", "#inf-cat", "#inf-ano", "#inf-mes"].forEach(s => $(s).value = "");
+    infEstado.sel = id;
+  }
+  desenharInformativos();
+  if (infEstado.sel) mostrarInformativo(infEstado.sel);
+  document.querySelector(`.inf[data-inf="${infEstado.sel}"]`)?.scrollIntoView({ block: "nearest" });
+}
+$("#btn-inf").addEventListener("click", () => modoInformativos(!document.body.classList.contains("modo-inf")));
+
+function desenharInformativos() {
+  const w = [], p = [];
+  if (infEstado.busca) {
+    const palavras = semAcento(infEstado.busca).split(/\s+/).filter(Boolean);
+    const cod = pesq(infEstado.busca);
+    const partes = [];
+    if (palavras.length) { partes.push("(" + palavras.map(() => "i.texto_busca LIKE ?").join(" AND ") + ")"); p.push(...palavras.map(x => "%" + x + "%")); }
+    if (cod.length >= 3) {
+      partes.push(`i.id IN (SELECT x.informativo_id FROM informativo_produto x JOIN produto pr ON pr.id = x.produto_id
+                   WHERE pr.codigo_pesq LIKE ? OR pr.id IN (SELECT produto_id FROM referencia_cruzada WHERE codigo_pesq LIKE ?))`);
+      p.push(cod + "%", cod + "%");
+    }
+    w.push("(" + partes.join(" OR ") + ")");
+  }
+  if (infEstado.cat) { w.push("i.categoria = ?"); p.push(infEstado.cat); }
+  if (infEstado.ano) { w.push("substr(i.data, 1, 4) = ?"); p.push(infEstado.ano); }
+  if (infEstado.mes) { w.push("substr(i.data, 6, 2) = ?"); p.push(infEstado.mes); }
+  const rows = q(`SELECT i.id, i.numero, i.data, i.titulo, i.imagem,
+                    (SELECT group_concat(pr.codigo, ", ") FROM informativo_produto x JOIN produto pr ON pr.id = x.produto_id WHERE x.informativo_id = i.id) codigos
+                  FROM informativo i ${w.length ? "WHERE " + w.join(" AND ") : ""} ORDER BY i.data DESC, i.ordem DESC`, p);
+  let html = `<div class="inf-total"><strong>${rows.length}</strong> informativo${rows.length === 1 ? "" : "s"}</div>`;
+  if (!rows.length) html += `<p class="vazio-msg">Nenhum informativo com esses filtros.</p>`;
+  for (const r of rows)
+    html += `<button class="inf${r.id === infEstado.sel ? " ativo" : ""}" data-inf="${r.id}">${miniatura(r, 56)}<span class="num">${esc(r.numero)}<span>${dataCurta(r.data)}</span></span><span class="tit">${esc(r.titulo)}</span><span class="cods">${esc(r.codigos || "")}</span></button>`;
+  $("#inf-itens").innerHTML = html;
+}
+$("#inf-itens").addEventListener("click", e => {
+  const b = e.target.closest(".inf"); if (!b) return;
+  document.querySelectorAll(".inf.ativo").forEach(x => x.classList.remove("ativo")); b.classList.add("ativo");
+  mostrarInformativo(+b.dataset.inf);
+});
+
+function mostrarInformativo(id) {
+  infEstado.sel = id;
+  const i = q("SELECT * FROM informativo WHERE id = ?", [id])[0];
+  if (!i) return;
+  const prods = q(`SELECT pr.id, pr.codigo, pr.descricao, pr.posicao FROM informativo_produto x JOIN produto pr ON pr.id = x.produto_id
+                   WHERE x.informativo_id = ? ORDER BY pr.codigo`, [id]);
+  let h = `<div class="etiqueta">${esc(i.numero)}</div>
+    <h2>${esc(i.titulo)}</h2>
+    <p class="meta">${dataLonga(i.data)} · ${esc(i.categoria)}${i.imagem ? ` · <a class="link-img" href="${esc(i.imagem)}" target="_blank" rel="noopener">Abrir imagem</a>` : ""}</p>
+    <h3>Produtos no informativo (${prods.length})</h3>`;
+  h += prods.length ? `<div class="prods">${prods.map(r => `<button data-prod="${r.id}"><b>${esc(r.codigo)}</b>${esc(r.descricao)} <small>${esc(r.posicao || "")}</small></button>`).join("")}</div>`
+    : "<p>Nenhum produto do catálogo foi identificado neste informativo.</p>";
+  h += i.imagem ? `<img class="folha" alt="Informativo ${esc(i.numero)}: ${esc(i.titulo)}" src="${esc(i.imagem)}">` : `<p class="sem-foto">Imagem não disponível.</p>`;
+  $("#inf-ver").innerHTML = h;
+  $("#inf-ver").scrollTop = 0;
+}
+$("#inf-ver").addEventListener("click", e => {
+  const b = e.target.closest("[data-prod]"); if (!b) return;
+  irParaProduto(+b.dataset.prod);
+});
+
+function irParaProduto(id) {
+  modoInformativos(false);
+  const lins = q("SELECT linha_id FROM produto_linha WHERE produto_id = ? ORDER BY linha_id", [id]).map(r => r.linha_id);
+  if (lins.length && !lins.includes(estado.linha)) trocarLinha(lins[0]);
+  mostrarProduto(id);
+  document.querySelectorAll(".item.ativo").forEach(x => x.classList.remove("ativo"));
+  document.querySelector(`.item[data-id="${id}"]`)?.classList.add("ativo");
+}
+
+let tInf;
+$("#inf-busca").addEventListener("input", e => { clearTimeout(tInf); tInf = setTimeout(() => { infEstado.busca = e.target.value.trim(); desenharInformativos(); }, 250); });
+for (const [sel, k] of [["#inf-cat", "cat"], ["#inf-ano", "ano"], ["#inf-mes", "mes"]])
+  $(sel).addEventListener("change", e => { infEstado[k] = e.target.value; desenharInformativos(); });
 </script>
 </body>
 </html>
