@@ -107,9 +107,9 @@ td{padding:6px 8px;border-bottom:1px solid var(--linha);vertical-align:top}
 #abertura .caixa{max-width:480px}
 #abertura h2{font:700 44px/1 var(--cond);margin:0 0 14px}
 #abertura p{color:#C5CFD6;margin:0 0 20px}
-#abertura label{display:inline-block;background:var(--sinal);color:var(--tinta);font-weight:600;padding:10px 20px;border-radius:4px;cursor:pointer}
+#abertura label:not([hidden]){display:inline-block;background:var(--sinal);color:var(--tinta);font-weight:600;padding:10px 20px;border-radius:4px;cursor:pointer}
 #abertura input{position:absolute;left:-9999px}
-#abertura .solta{margin-top:18px;border:2px dashed #4D6272;border-radius:6px;padding:18px;text-align:center;color:#9FB0BC}
+#abertura .solta:not([hidden]){margin-top:18px;border:2px dashed #4D6272;border-radius:6px;padding:18px;text-align:center;color:#9FB0BC}
 #abertura.arrastando .solta{border-color:var(--sinal);color:#fff}
 #abertura .erro{color:#FFB4A8;margin-top:12px}
 
@@ -182,12 +182,18 @@ async function abrirBytes(buf) {
   try {
     const SQL = await sqlPronto;
     db = new SQL.Database(new Uint8Array(buf));
-    q("SELECT 1 FROM linha LIMIT 1");
+    let versao = "invalido";
+    try { q("SELECT 1 FROM arvore LIMIT 1"); versao = "antigo"; q("SELECT 1 FROM linha LIMIT 1"); versao = "ok"; } catch (e) {}
+    if (versao !== "ok") throw new Error(versao);
     $("#abertura").remove();
     montar();
   } catch (e) {
     db = null;
-    $("#erro-abertura").textContent = "Este arquivo não é o banco do catálogo (esperado: catalogo_sistema.db gerado com as árvores por linha).";
+    $("#abertura").querySelectorAll("label, .solta").forEach(el => el.hidden = false);
+    $("#abertura p").textContent = "Abra o arquivo catalogo_sistema.db para carregar os produtos e as árvores.";
+    $("#erro-abertura").textContent = e.message === "antigo"
+      ? "O banco carregado é de uma versão anterior (sem as árvores por linha). Atualize lib/catalogo_db.js e catalogo_sistema.db junto com este index.html."
+      : "Este arquivo não é o banco do catálogo (esperado: catalogo_sistema.db).";
   }
 }
 $("#arquivo").addEventListener("change", e => { const f = e.target.files[0]; if (f) f.arrayBuffer().then(abrirBytes); });
