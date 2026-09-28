@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Catálogo de peças — Passeio</title>
+<title>Catálogo de peças</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -36,8 +36,18 @@ header .base{font-size:13px;color:#B9C4CC;white-space:nowrap}
 main{flex:1;display:grid;grid-template-columns:300px minmax(320px,1fr) minmax(360px,1.1fr);min-height:0}
 section{min-height:0;overflow:auto;border-right:1px solid var(--linha)}
 
+/* Abas de linha */
+#linhas{display:flex;flex-wrap:wrap;gap:4px;padding:10px 10px 8px;border-bottom:1px solid var(--linha);position:sticky;top:0;background:var(--painel);z-index:1}
+.aba{border:1px solid var(--linha);background:none;border-radius:4px;padding:5px 10px;cursor:pointer;font:600 15px/1.1 var(--cond);display:flex;gap:6px;align-items:baseline}
+.aba small{font:500 12px var(--sans);color:var(--suave)}
+.aba:hover{border-color:var(--sinal)}
+.aba[aria-pressed="true"]{background:var(--grafite);border-color:var(--grafite);color:#fff}
+.aba[aria-pressed="true"] small{color:#B9C4CC}
+.aba.vazia{opacity:.5}
+@media (prefers-color-scheme:dark){.aba[aria-pressed="true"]{background:var(--sinal);border-color:var(--sinal);color:var(--tinta)}.aba[aria-pressed="true"] small{color:var(--tinta)}}
 /* Árvore */
-#arvore{background:var(--painel);padding:8px 0}
+#arvore{background:var(--painel);padding:0 0 8px}
+#nos{padding-top:6px}
 .no{display:flex;align-items:center;gap:6px;width:100%;text-align:left;background:none;border:0;padding:5px 12px;cursor:pointer;border-left:3px solid transparent}
 .no:hover{background:var(--aco)}
 @media (prefers-color-scheme:dark){.no:hover{background:#26343E}}
@@ -80,6 +90,7 @@ section{min-height:0;overflow:auto;border-right:1px solid var(--linha)}
 .sem-foto{font-size:13px;color:var(--suave);border:1px dashed var(--linha);padding:10px 14px;border-radius:4px}
 .caminhos{margin:0 0 18px;padding:0;list-style:none}
 .caminhos li{font-size:14px;padding:3px 0}
+.caminhos .lin{font:600 13px var(--cond);background:var(--aco);color:var(--tinta);border-radius:3px;padding:1px 6px;margin-right:6px}
 .caminhos a{color:inherit;text-decoration:underline;text-decoration-color:var(--sinal);text-underline-offset:3px;cursor:pointer}
 h3{font:600 17px var(--cond);margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--sinal);display:inline-block}
 .tabela{overflow-x:auto}
@@ -133,7 +144,7 @@ td{padding:6px 8px;border-bottom:1px solid var(--linha);vertical-align:top}
 </header>
 
 <main>
-  <section id="arvore" aria-label="Árvore de sistemas"></section>
+  <section id="arvore" aria-label="Árvore de sistemas"><div id="linhas" role="group" aria-label="Linha de veículo"></div><div id="nos"></div></section>
   <section id="lista" aria-label="Produtos"></section>
   <section id="detalhe" aria-label="Detalhe do produto"><p class="vazio-msg">Escolha um produto na lista para ver aplicações, referências cruzadas e fotos.</p></section>
 </main>
@@ -144,8 +155,9 @@ td{padding:6px 8px;border-bottom:1px solid var(--linha);vertical-align:top}
 <script>
 "use strict";
 let db = null;
-let arvore = [], porId = new Map(), filhosDe = new Map();
-const estado = { no: null, busca: "", montadora: "", modelo: "", limite: 100, produto: null };
+let linhas = [], linhaPorId = new Map();
+let porId = new Map(), filhosDe = new Map();
+const estado = { linha: 1, no: null, busca: "", montadora: "", modelo: "", limite: 100, produto: null };
 let pastaFotos = "FotoProd/";
 try { pastaFotos = localStorage.getItem("pastaFotos") || pastaFotos; } catch (e) {}
 
@@ -170,12 +182,12 @@ async function abrirBytes(buf) {
   try {
     const SQL = await sqlPronto;
     db = new SQL.Database(new Uint8Array(buf));
-    q("SELECT 1 FROM arvore LIMIT 1");
+    q("SELECT 1 FROM linha LIMIT 1");
     $("#abertura").remove();
     montar();
   } catch (e) {
     db = null;
-    $("#erro-abertura").textContent = "Este arquivo não é o banco do catálogo (esperado: catalogo_sistema.db).";
+    $("#erro-abertura").textContent = "Este arquivo não é o banco do catálogo (esperado: catalogo_sistema.db gerado com as árvores por linha).";
   }
 }
 $("#arquivo").addEventListener("change", e => { const f = e.target.files[0]; if (f) f.arrayBuffer().then(abrirBytes); });
@@ -200,23 +212,40 @@ if (window.CATALOGO_DB_B64) {
 function montar() {
   const o = Object.fromEntries(q("SELECT chave, valor FROM origem").map(r => [r.chave, r.valor]));
   $("#base").textContent = `Base Cofap v${o.versao} de ${o.data_emissao.split("-").reverse().join("/")}`;
-  for (const r of q("SELECT DISTINCT f.id, f.nome FROM fabricante f JOIN aplicacao a ON a.montadora_id = f.id ORDER BY f.nome"))
-    $("#montadora").insertAdjacentHTML("beforeend", `<option value="${r.id}">${esc(r.nome)}</option>`);
-  arvore = q("SELECT id, pai_id, nivel, nome, caminho FROM arvore ORDER BY ordem");
-  for (const n of arvore) { porId.set(n.id, n); if (!filhosDe.has(n.pai_id)) filhosDe.set(n.pai_id, []); filhosDe.get(n.pai_id).push(n); }
+  linhas = q("SELECT id, nome FROM linha ORDER BY id");
+  linhas.forEach(l => linhaPorId.set(l.id, l));
+  for (const n of q("SELECT id, linha_id, pai_id, nivel, nome, caminho FROM arvore ORDER BY ordem")) {
+    porId.set(n.id, n);
+    const k = n.pai_id ?? "raiz" + n.linha_id;
+    if (!filhosDe.has(k)) filhosDe.set(k, []);
+    filhosDe.get(k).push(n);
+  }
+  $("#linhas").innerHTML = linhas.map(l => `<button class="aba" data-linha="${l.id}" aria-pressed="${l.id === estado.linha}">${esc(l.nome)} <small data-ql="${l.id}"></small></button>`).join("");
+  $("#linhas").addEventListener("click", e => { const b = e.target.closest(".aba"); if (b) trocarLinha(+b.dataset.linha); });
+  trocarLinha(estado.linha);
+}
+
+function trocarLinha(id, noInicial) {
+  estado.linha = id; estado.no = noInicial ?? null;
+  document.querySelectorAll(".aba").forEach(b => b.setAttribute("aria-pressed", +b.dataset.linha === id));
+  // montadoras com veículos nesta linha
+  const atual = estado.montadora;
+  const ms = q("SELECT DISTINCT f.id, f.nome FROM fabricante f JOIN aplicacao a ON a.montadora_id = f.id WHERE a.linha_id = ? ORDER BY f.nome", [id]);
+  $("#montadora").innerHTML = `<option value="">Todas as montadoras</option>` + ms.map(r => `<option value="${r.id}">${esc(r.nome)}</option>`).join("");
+  estado.montadora = ms.some(m => String(m.id) === atual) ? atual : "";
+  $("#montadora").value = estado.montadora;
   desenharArvore();
-  atualizar();
+  if (noInicial) selecionarNo(noInicial, true); else atualizar();
 }
 
 function folhas(id) {
-  if (id === "sem") return [];
   const f = filhosDe.get(id); if (!f) return [id];
   return f.flatMap(c => folhas(c.id));
 }
 
 /* ---------- Filtros → SQL ---------- */
-function clausulaFiltros() {
-  const w = [], p = [];
+function clausulaFiltros(linha = estado.linha, comVeiculo = true) {
+  const w = ["p.id IN (SELECT produto_id FROM produto_linha WHERE linha_id = ?)"], p = [linha];
   if (estado.busca) {
     const cod = pesq(estado.busca);
     const palavras = semAcento(estado.busca).split(/\s+/).filter(Boolean);
@@ -228,44 +257,56 @@ function clausulaFiltros() {
     if (palavras.length) { partes.push("(" + palavras.map(() => "p.texto_busca LIKE ?").join(" AND ") + ")"); p.push(...palavras.map(x => "%" + x + "%")); }
     if (partes.length) w.push("(" + partes.join(" OR ") + ")");
   }
-  if (estado.montadora || estado.modelo) {
-    const s = []; 
+  if (comVeiculo && (estado.montadora || estado.modelo)) {
+    const s = ["a.linha_id = ?"]; p.push(linha);
     if (estado.montadora) { s.push("a.montadora_id = ?"); p.push(+estado.montadora); }
     if (estado.modelo) { s.push("a.modelo LIKE ?"); p.push("%" + estado.modelo + "%"); }
     w.push(`p.id IN (SELECT pa.produto_id FROM produto_aplicacao pa JOIN aplicacao a ON a.id = pa.aplicacao_id WHERE ${s.join(" AND ")})`);
   }
   return { w, p };
 }
+const SEM_CLASSIF = "p.id NOT IN (SELECT pa.produto_id FROM produto_arvore pa JOIN arvore a ON a.id = pa.arvore_id WHERE a.linha_id = ?)";
 
 function atualizar() {
   estado.limite = 100;
+  contarLinhas();
   contarArvore();
   desenharLista();
+}
+
+function contarLinhas() {
+  for (const l of linhas) {
+    const { w, p } = clausulaFiltros(l.id, l.id === estado.linha);
+    const n = q(`SELECT COUNT(*) c FROM produto p WHERE ${w.join(" AND ")}`, p)[0].c;
+    const el = document.querySelector(`[data-ql="${l.id}"]`);
+    el.textContent = n.toLocaleString("pt-BR");
+    el.parentElement.classList.toggle("vazia", !n);
+  }
 }
 
 /* ---------- Árvore ---------- */
 function desenharArvore() {
   const html = [];
-  const rec = (pai) => {
-    for (const n of filhosDe.get(pai) || []) {
+  const rec = (k) => {
+    for (const n of filhosDe.get(k) || []) {
       const temFilhos = filhosDe.has(n.id);
       html.push(`<div class="n${n.nivel}"><button class="no" data-id="${n.id}" aria-expanded="false"><span class="seta">${temFilhos ? "▶" : ""}</span><span class="nome">${esc(n.nome)}</span><span class="qtd" data-q="${n.id}"></span></button>`);
       if (temFilhos) { html.push('<div class="filhos">'); rec(n.id); html.push("</div>"); }
       html.push("</div>");
     }
   };
-  html.push(`<div class="n1"><button class="no" data-id="todos"><span class="seta"></span><span class="nome">Todos os produtos</span><span class="qtd" data-q="todos"></span></button></div>`);
-  rec(null);
+  html.push(`<div class="n1"><button class="no ativo" data-id="todos"><span class="seta"></span><span class="nome">Todos os produtos</span><span class="qtd" data-q="todos"></span></button></div>`);
+  rec("raiz" + estado.linha);
   html.push(`<div class="sep"></div><div class="n1"><button class="no" data-id="sem"><span class="seta"></span><span class="nome">Sem classificação</span><span class="qtd" data-q="sem"></span></button></div>`);
-  $("#arvore").innerHTML = html.join("");
-  $("#arvore").addEventListener("click", e => {
-    const b = e.target.closest(".no"); if (!b) return;
-    const id = b.dataset.id;
-    const temFilhos = b.nextElementSibling && b.nextElementSibling.classList.contains("filhos");
-    if (temFilhos) { b.classList.toggle("aberto"); b.setAttribute("aria-expanded", b.classList.contains("aberto")); }
-    selecionarNo(id === "todos" ? null : id === "sem" ? "sem" : +id);
-  });
+  $("#nos").innerHTML = html.join("");
 }
+$("#nos").addEventListener("click", e => {
+  const b = e.target.closest(".no"); if (!b) return;
+  const id = b.dataset.id;
+  const temFilhos = b.nextElementSibling && b.nextElementSibling.classList.contains("filhos");
+  if (temFilhos) { b.classList.toggle("aberto"); b.setAttribute("aria-expanded", b.classList.contains("aberto")); }
+  selecionarNo(id === "todos" ? null : id === "sem" ? "sem" : +id);
+});
 
 function selecionarNo(id, abrir) {
   estado.no = id;
@@ -273,22 +314,23 @@ function selecionarNo(id, abrir) {
   const b = document.querySelector(`.no[data-id="${id ?? "todos"}"]`);
   if (b) {
     b.classList.add("ativo");
-    if (abrir) { let el = b.parentElement; while (el && el.id !== "arvore") { if (el.classList.contains("filhos")) el.previousElementSibling.classList.add("aberto"); el = el.parentElement; } b.scrollIntoView({ block: "nearest" }); }
+    if (abrir) { let el = b.parentElement; while (el && el.id !== "nos") { if (el.classList.contains("filhos")) el.previousElementSibling.classList.add("aberto"); el = el.parentElement; } b.scrollIntoView({ block: "nearest" }); }
   }
-  estado.limite = 100; desenharLista();
+  estado.limite = 100; contarArvore(); desenharLista();
 }
 
 function contarArvore() {
   const { w, p } = clausulaFiltros();
-  const where = w.length ? "WHERE " + w.join(" AND ") : "";
-  const pares = q(`SELECT pa.arvore_id AS a, pa.produto_id AS p FROM produto_arvore pa JOIN produto p ON p.id = pa.produto_id ${where}`, p);
+  const where = w.join(" AND ");
+  const pares = q(`SELECT pa.arvore_id AS a, pa.produto_id AS p FROM produto_arvore pa JOIN arvore ar ON ar.id = pa.arvore_id
+                   JOIN produto p ON p.id = pa.produto_id WHERE ar.linha_id = ? AND ${where}`, [estado.linha, ...p]);
   const conj = new Map();
   const add = (id, pid) => { if (!conj.has(id)) conj.set(id, new Set()); conj.get(id).add(pid); };
   for (const { a, p: pid } of pares) { let n = porId.get(a); while (n) { add(n.id, pid); n = porId.get(n.pai_id); } }
   document.querySelectorAll("[data-q]").forEach(el => {
     const k = el.dataset.q; let v;
-    if (k === "todos") v = q(`SELECT COUNT(*) c FROM produto p ${where}`, p)[0].c;
-    else if (k === "sem") v = q(`SELECT COUNT(*) c FROM produto p ${where ? where + " AND" : "WHERE"} p.id NOT IN (SELECT produto_id FROM produto_arvore)`, p)[0].c;
+    if (k === "todos") v = q(`SELECT COUNT(*) c FROM produto p WHERE ${where}`, p)[0].c;
+    else if (k === "sem") v = q(`SELECT COUNT(*) c FROM produto p WHERE ${where} AND ${SEM_CLASSIF}`, [...p, estado.linha])[0].c;
     else v = conj.get(+k)?.size || 0;
     el.textContent = v || "";
     el.closest(".no").classList.toggle("vazio", !v);
@@ -298,48 +340,93 @@ function contarArvore() {
 /* ---------- Lista ---------- */
 function desenharLista() {
   const { w, p } = clausulaFiltros();
-  if (estado.no === "sem") w.push("p.id NOT IN (SELECT produto_id FROM produto_arvore)");
-  else if (estado.no != null) { const f = folhas(estado.no); w.push(`p.id IN (SELECT produto_id FROM produto_arvore WHERE arvore_id IN (${f.join(",")}))`); }
-  const where = w.length ? "WHERE " + w.join(" AND ") : "";
+  if (estado.no === "sem") { w.push(SEM_CLASSIF); p.push(estado.linha); }
+  else if (estado.no != null) w.push(`p.id IN (SELECT produto_id FROM produto_arvore WHERE arvore_id IN (${folhas(estado.no).join(",")}))`);
+  const where = "WHERE " + w.join(" AND ");
   const total = q(`SELECT COUNT(*) c FROM produto p ${where}`, p)[0].c;
-  const rows = q(`SELECT p.id, p.codigo, p.descricao, p.posicao, p.linha FROM produto p ${where} ORDER BY p.descricao, p.codigo LIMIT ${estado.limite}`, p);
-  const titulo = estado.no === "sem" ? "Sem classificação" : estado.no ? porId.get(estado.no).caminho : "Todos os produtos";
+  const rows = q(`SELECT p.id, p.codigo, p.descricao, p.posicao, p.linha_cofap FROM produto p ${where} ORDER BY p.descricao, p.codigo LIMIT ${estado.limite}`, p);
+  const nomeLinha = linhaPorId.get(estado.linha).nome;
+  const titulo = estado.no === "sem" ? `${nomeLinha} > Sem classificação` : estado.no ? `${nomeLinha} > ${porId.get(estado.no).caminho}` : nomeLinha;
   let html = `<div class="topo-lista"><strong>${total.toLocaleString("pt-BR")}</strong> produto${total === 1 ? "" : "s"} em ${esc(titulo)}</div>`;
-  if (!rows.length) html += `<p class="vazio-msg">Nenhum produto com esses filtros. Tente outro modelo, outra montadora ou limpe a busca.</p>`;
+  if (!rows.length) {
+    const outras = linhas.filter(l => l.id !== estado.linha).map(l => {
+      const f = clausulaFiltros(l.id, false); return [l, q(`SELECT COUNT(*) c FROM produto p WHERE ${f.w.join(" AND ")}`, f.p)[0].c];
+    }).filter(x => x[1]);
+    const semProdutosNaLinha = !q("SELECT 1 FROM produto_linha WHERE linha_id = ? LIMIT 1", [estado.linha]).length;
+    html += semProdutosNaLinha
+      ? `<p class="vazio-msg">Nenhum produto do catálogo Cofap tem aplicação na linha ${esc(nomeLinha)}. A árvore está carregada e passa a ser usada quando houver produtos.</p>`
+      : `<p class="vazio-msg">Nenhum produto com esses filtros nesta linha.${outras.length && estado.busca ? " A busca encontra resultados em: " + outras.map(([l, n]) => `<a href="#" data-ir="${l.id}">${esc(l.nome)} (${n})</a>`).join(", ") + "." : " Tente outro modelo, outra montadora ou limpe a busca."}</p>`;
+  }
   for (const r of rows)
-    html += `<button class="item${r.id === estado.produto ? " ativo" : ""}" data-id="${r.id}"><span class="cod">${esc(r.codigo)}</span><span class="desc">${esc(r.descricao)}${r.linha ? " " + esc(r.linha) : ""}</span><span class="pos">${esc(r.posicao || "")}</span></button>`;
+    html += `<button class="item${r.id === estado.produto ? " ativo" : ""}" data-id="${r.id}"><span class="cod">${esc(r.codigo)}</span><span class="desc">${esc(r.descricao)}${r.linha_cofap ? " " + esc(r.linha_cofap) : ""}</span><span class="pos">${esc(r.posicao || "")}</span></button>`;
   if (total > rows.length) html += `<button class="mais" id="mais">Mostrar mais ${Math.min(100, total - rows.length)}</button>`;
   $("#lista").innerHTML = html;
   $("#mais")?.addEventListener("click", () => { estado.limite += 100; const y = $("#lista").scrollTop; desenharLista(); $("#lista").scrollTop = y; });
 }
-$("#lista").addEventListener("click", e => { const b = e.target.closest(".item"); if (!b) return; mostrarProduto(+b.dataset.id); document.querySelectorAll(".item.ativo").forEach(x => x.classList.remove("ativo")); b.classList.add("ativo"); });
+$("#lista").addEventListener("click", e => {
+  const ir = e.target.closest("[data-ir]"); if (ir) { e.preventDefault(); trocarLinha(+ir.dataset.ir); return; }
+  const b = e.target.closest(".item"); if (!b) return;
+  mostrarProduto(+b.dataset.id);
+  document.querySelectorAll(".item.ativo").forEach(x => x.classList.remove("ativo")); b.classList.add("ativo");
+});
+
+/* ---------- Fotos ---------- */
+// Em site publicado (http/https) um caminho file:/// salvo antes não funciona: usa a pasta ao lado da página.
+function pastaEfetiva() {
+  return location.protocol.startsWith("http") && /^file:/i.test(pastaFotos) ? "FotoProd/" : pastaFotos;
+}
+// Servidores Linux (GitHub Pages) diferenciam maiúsculas: tenta minúsculas, original e maiúsculas.
+function carregarFoto(img) {
+  const f = img.dataset.foto, base = pastaEfetiva();
+  const ponto = f.lastIndexOf(".");
+  const nome = ponto > 0 ? f.slice(0, ponto) : f, ext = ponto > 0 ? f.slice(ponto) : "";
+  const tentativas = [...new Set([f.toLowerCase(), f, nome + ext.toLowerCase(), nome + ext.toUpperCase(), f.toUpperCase()])]
+    .map(n => base + encodeURIComponent(n));
+  let i = 0;
+  img.onerror = () => {
+    if (++i < tentativas.length) { img.src = tentativas[i]; return; }
+    const aviso = document.createElement("span");
+    aviso.className = "sem-foto";
+    aviso.textContent = `Foto não encontrada: ${new URL(tentativas[0], location.href).href}`;
+    img.replaceWith(aviso);
+  };
+  img.src = tentativas[0];
+}
 
 /* ---------- Detalhe ---------- */
 function mostrarProduto(id) {
   estado.produto = id;
   const p = q("SELECT * FROM produto WHERE id = ?", [id])[0];
-  const cam = q("SELECT a.id, a.caminho FROM produto_arvore pa JOIN arvore a ON a.id = pa.arvore_id WHERE pa.produto_id = ?", [id]);
-  const apl = q(`SELECT f.nome montadora, a.modelo, a.complemento, a.anos, a.complemento3, a.complemento4 FROM produto_aplicacao pa
+  const cam = q(`SELECT a.id, a.caminho, l.id AS lid, l.nome AS linha FROM produto_arvore pa JOIN arvore a ON a.id = pa.arvore_id
+                 JOIN linha l ON l.id = a.linha_id WHERE pa.produto_id = ? ORDER BY l.id, a.ordem`, [id]);
+  const lins = q(`SELECT l.nome FROM produto_linha pl JOIN linha l ON l.id = pl.linha_id WHERE pl.produto_id = ? ORDER BY l.id`, [id]).map(r => r.nome);
+  const apl = q(`SELECT l.nome linha, f.nome montadora, a.modelo, a.complemento, a.anos, a.complemento3, a.complemento4 FROM produto_aplicacao pa
                  JOIN aplicacao a ON a.id = pa.aplicacao_id LEFT JOIN fabricante f ON f.id = a.montadora_id
-                 WHERE pa.produto_id = ? ORDER BY f.nome, a.modelo, a.anos`, [id]);
+                 JOIN linha l ON l.id = a.linha_id
+                 WHERE pa.produto_id = ? ORDER BY l.id, f.nome, a.modelo, a.anos`, [id]);
   const refs = q(`SELECT f.nome marca, r.codigo FROM referencia_cruzada r LEFT JOIN fabricante f ON f.id = r.marca_id
                   WHERE r.produto_id = ? ORDER BY f.nome, r.codigo`, [id]);
   const fotos = [p.foto, p.foto2, p.foto3].filter(Boolean);
   let h = `<div class="etiqueta">${esc(p.codigo)}</div>
-    <h2>${esc(p.descricao)}${p.linha ? " " + esc(p.linha) : ""}</h2>
-    <p class="meta">${esc(p.posicao || "Posição não informada")} · Grupo Cofap: ${esc(p.grupo_cofap || "—")}${p.unidade ? " · Unidade: " + esc(p.unidade) : ""}</p>
-    <div class="fotos">${fotos.map(f => `<img src="${esc(pastaFotos + f)}" alt="Foto ${esc(p.codigo)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'sem-foto',textContent:'Foto ${esc(f)} não encontrada em ${esc(pastaFotos)}'}))">`).join("") || '<span class="sem-foto">Produto sem foto cadastrada</span>'}</div>
+    <h2>${esc(p.descricao)}${p.linha_cofap ? " " + esc(p.linha_cofap) : ""}</h2>
+    <p class="meta">${esc(p.posicao || "Posição não informada")} · Grupo Cofap: ${esc(p.grupo_cofap || "—")}${p.unidade ? " · Unidade: " + esc(p.unidade) : ""} · Linha: ${esc(lins.join(", "))}</p>
+    <div class="fotos">${fotos.map(f => `<img alt="Foto ${esc(p.codigo)}" data-foto="${esc(f)}">`).join("") || '<span class="sem-foto">Produto sem foto cadastrada</span>'}</div>
     <h3>Na árvore</h3>
-    <ul class="caminhos">${cam.length ? cam.map(c => `<li><a data-no="${c.id}">${esc(c.caminho)}</a></li>`).join("") : "<li>Sem classificação na árvore Passeio</li>"}</ul>`;
+    <ul class="caminhos">${cam.length ? cam.map(c => `<li><span class="lin">${esc(c.linha)}</span><a data-no="${c.id}" data-lin="${c.lid}">${esc(c.caminho)}</a></li>`).join("") : "<li>Sem classificação nas árvores</li>"}</ul>`;
   if (p.observacao) h += `<h3>Observação</h3><div class="obs">${esc(p.observacao)}</div>`;
   h += `<h3>Aplicações (${apl.length})</h3>`;
-  h += apl.length ? `<div class="tabela"><table><thead><tr><th>Montadora</th><th>Modelo</th><th>Complemento</th><th>Anos</th></tr></thead><tbody>${apl.map(a => `<tr><td>${esc(a.montadora)}</td><td>${esc(a.modelo)}</td><td>${esc([a.complemento, a.complemento3, a.complemento4].filter(Boolean).join(" · "))}</td><td>${esc(a.anos)}</td></tr>`).join("")}</tbody></table></div>` : "<p>Sem aplicações cadastradas.</p>";
+  h += apl.length ? `<div class="tabela"><table><thead><tr><th>Linha</th><th>Montadora</th><th>Modelo</th><th>Complemento</th><th>Anos</th></tr></thead><tbody>${apl.map(a => `<tr><td>${esc(a.linha)}</td><td>${esc(a.montadora)}</td><td>${esc(a.modelo)}</td><td>${esc([a.complemento, a.complemento3, a.complemento4].filter(Boolean).join(" · "))}</td><td>${esc(a.anos)}</td></tr>`).join("")}</tbody></table></div>` : "<p>Sem aplicações cadastradas.</p>";
   h += `<h3>Referências cruzadas (${refs.length})</h3>`;
   h += refs.length ? `<div class="refs">${refs.map(r => `<span class="ref"><b>${esc(r.marca)}</b> ${esc(r.codigo)}</span>`).join("")}</div>` : "<p>Sem referências cruzadas.</p>";
   $("#detalhe").innerHTML = h;
   $("#detalhe").scrollTop = 0;
+  document.querySelectorAll("#detalhe img[data-foto]").forEach(carregarFoto);
 }
-$("#detalhe").addEventListener("click", e => { const a = e.target.closest("[data-no]"); if (a) selecionarNo(+a.dataset.no, true); });
+$("#detalhe").addEventListener("click", e => {
+  const a = e.target.closest("[data-no]"); if (!a) return;
+  const lin = +a.dataset.lin;
+  if (lin !== estado.linha) trocarLinha(lin, +a.dataset.no); else selecionarNo(+a.dataset.no, true);
+});
 
 /* ---------- Eventos de filtro ---------- */
 let t;
